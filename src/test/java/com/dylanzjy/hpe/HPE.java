@@ -24,9 +24,6 @@ import java.util.Random;
  * Created by zhangjiayi on 2017/2/17.
  */
 public class HPE {
-    private HPEPredicateOnlyService predicate = new HPEPredicateOnlyService();
-
-    private HPEEncryptService encryption = new HPEEncryptService();
 
     /**
      * set up key pair
@@ -42,6 +39,7 @@ public class HPE {
      * @param x attributes vector
      */
     public CipherText encryptForEvaluation(HPEPublicKey publicKey, Element[][] x) {
+        HPEPredicateOnlyService predicate = new HPEPredicateOnlyService();
         return predicate.encrypt(new HPEEncryptionParameters(publicKey, x));
     }
 
@@ -49,6 +47,7 @@ public class HPE {
      * evaluate whether the secretKey matches index
      */
     public boolean evaluate(HPESecretKey secretKey, CipherText cipherText) {
+        HPEPredicateOnlyService predicate = new HPEPredicateOnlyService();
         return predicate.evaluate(new HPEDecryptionParameters(secretKey, cipherText));
     }
 
@@ -76,14 +75,16 @@ public class HPE {
      * encrypt a GTField number
      */
     public CipherText encrypt(HPEPublicKey publicKey, Element[][] x, Element m) {
-        return encryption.encrypt(new HPEEncryptionParameters(publicKey, x, m));
+        HPEEncryptService encryptService = new HPEEncryptService();
+        return encryptService.encrypt(new HPEEncryptionParameters(publicKey, x, m));
     }
 
     /**
      * decryption
      */
     public Element decrypt(HPESecretKey secretKey, CipherText cipherText) {
-        return encryption.decrypt(new HPEDecryptionParameters(secretKey, cipherText));
+        HPEEncryptService encryptService = new HPEEncryptService();
+        return encryptService.decrypt(new HPEDecryptionParameters(secretKey, cipherText));
     }
 
 
@@ -108,10 +109,10 @@ public class HPE {
         // test for evaluation
         CipherText ev = hpe.encryptForEvaluation(keyPair.getPublicKey(), X);
         HPESecretKey evKey = hpe.keyGen(keyPair.getPrivateKey(), V);
+        evKey = hpe.delegate(evKey, Vl);
         Assert.assertEquals(true, hpe.evaluate(evKey, ev));
 
         // test for encryption
-        evKey = hpe.delegate(evKey, Vl);
         Element m = pairing.getGT().newRandomElement();
         CipherText cm = hpe.encrypt(keyPair.getPublicKey(), X, m);
         Assert.assertEquals(true, m.equals(hpe.decrypt(evKey, cm)));
